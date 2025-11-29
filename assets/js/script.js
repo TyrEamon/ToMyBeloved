@@ -1,7 +1,10 @@
 /* assets/js/script.js */
 
-// 在这里自定义专属内容：称呼、正文、时间线、情话池以及隐藏彩蛋文字
-const config = {
+const CONFIG_ENDPOINT = '/api/config';
+const DEFAULT_CONFIG_URL = '/data/default-config.json';
+
+// 当远程接口不可用且本地 JSON 也无法读取时，使用这一份兜底数据保证页面正常展示
+const LOCAL_FALLBACK_CONFIG = {
     nickname: "吾爱",
     texts: [
         "这世上人来人往，能找到一个说话投机、三观契合的人，真的太难得了。",
@@ -20,9 +23,6 @@ const config = {
         { title: "携手", date: "2022-08-20", description: "做出了承诺，就没想过要退缩。" },
         { title: "展望", date: "未来", description: "路还很长，请多指教。" }
     ],
-
-// 可自由替换喜欢的情话，支持任意数量
-    
     loveMessages: [
         "你在我未来的计划里。",
         "所有的温柔都只想留给你。",
@@ -30,201 +30,299 @@ const config = {
         "比起喜欢，我更想说我爱你，更想说我懂你。",
         "只要你需要，我随叫随到。"
     ],
-
-// 小彩蛋区域：点击右下角的小心心即可显示隐藏留言，可在 config.secretMessage 中任意替换文字
-    
     secretMessage: "没别的，就是想和你在这个不完美的世界里，建一个小小的、温暖的家。"
 };
 
+let appState = {
+    config: LOCAL_FALLBACK_CONFIG,
+    isOpened: false,
+    typingStarted: false,
+    particleTimer: null
+};
 
 document.addEventListener('DOMContentLoaded', () => {
-    const envelope = document.getElementById('envelope-container');
-    const letter = document.getElementById('letter-container');
-    const bgm = document.getElementById('bgm');
-    const textArea = document.getElementById('text-area');
-    const nicknameEl = document.getElementById('nickname');
-    const signatureEl = document.getElementById('signature');
-    const dateEl = document.getElementById('date');
-    const dayCountEl = document.getElementById('day-count');
-    const timelineList = document.getElementById('timeline-list');
-    const randomBtn = document.getElementById('random-message-btn');
-    const randomDisplay = document.getElementById('random-message-display');
-    const secretHeart = document.getElementById('secret-heart');
-    const secretMessage = document.getElementById('secret-message');
-    const secretMessageText = document.getElementById('secret-message-text');
-    const particlesContainer = document.getElementById('particles');
+    initLoveLetter().catch(error => {
+        console.error('初始化恋爱信封失败：', error);
+    });
+});
 
-    let isOpened = false;
-    let typingStarted = false;
-    let particleTimer = null;
+async function initLoveLetter() {
+    const elements = collectElements();
+    appState.config = await loadConfig();
 
-    if (nicknameEl) nicknameEl.innerText = config.nickname;
-    if (signatureEl) signatureEl.innerText = config.signature;
-    if (dateEl) dateEl.innerText = config.date;
-    if (secretMessageText) secretMessageText.textContent = config.secretMessage;
+    hydrateStaticContent(elements);
+    registerEnvelopeInteraction(elements);
+    registerRandomMessage(elements);
+    registerSecretToggle(elements);
+    populateTimeline(elements);
+    updateDayCount(elements);
+    setInterval(() => updateDayCount(elements), 60 * 60 * 1000);
+}
 
-    populateTimeline();
-    updateDayCount();
-    setInterval(updateDayCount, 60 * 60 * 1000);
+function collectElements() {
+    return {
+        envelope: document.getElementById('envelope-container'),
+        letter: document.getElementById('letter-container'),
+        bgm: document.getElementById('bgm'),
+        textArea: document.getElementById('text-area'),
+        nickname: document.getElementById('nickname'),
+        signature: document.getElementById('signature'),
+        date: document.getElementById('date'),
+        dayCount: document.getElementById('day-count'),
+        timelineList: document.getElementById('timeline-list'),
+        randomBtn: document.getElementById('random-message-btn'),
+        randomDisplay: document.getElementById('random-message-display'),
+        secretHeart: document.getElementById('secret-heart'),
+        secretMessage: document.getElementById('secret-message'),
+        secretMessageText: document.getElementById('secret-message-text'),
+        particlesContainer: document.getElementById('particles')
+    };
+}
+
+function hydrateStaticContent(elements) {
+    const { nickname, signature, date, secretMessageText } = elements;
+    if (nickname) nickname.innerText = safeText(appState.config.nickname);
+    if (signature) signature.innerText = safeText(appState.config.signature);
+    if (date) date.innerText = safeText(appState.config.date);
+    if (secretMessageText) secretMessageText.textContent = safeText(appState.config.secretMessage);
+}
+
+function registerEnvelopeInteraction(elements) {
+    const { envelope } = elements;
+    if (!envelope) return;
 
     const openLetter = () => {
-        if (isOpened) return;
-        isOpened = true;
+        if (appState.isOpened) return;
+        appState.isOpened = true;
 
-        if (bgm) {
-            bgm.play().catch(err => {
-                console.warn('Autoplay blocked, user interaction required.', err);
-            });
-        }
-
-        if (envelope) {
-            envelope.classList.add('opened');
-            envelope.setAttribute('aria-hidden', 'true');
-            envelope.setAttribute('tabindex', '-1');
-            setTimeout(() => {
-                envelope.style.display = 'none';
-            }, 900);
-        }
-
-        if (letter) {
-            letter.style.display = 'block';
-            requestAnimationFrame(() => {
-                letter.classList.add('revealed');
-                letter.setAttribute('aria-hidden', 'false');
-            });
-        }
+        playBgm(elements.bgm);
+        revealLetter(elements);
 
         setTimeout(() => {
-            startTyping();
-            startParticles();
+            startTyping(elements);
+            startParticles(elements);
         }, 400);
     };
 
+    envelope.addEventListener('click', openLetter);
+    envelope.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            openLetter();
+        }
+    });
+}
+
+function playBgm(bgm) {
+    if (!bgm) return;
+    bgm.play().catch(err => {
+        console.warn('自动播放被浏览器阻止，等待用户交互。', err);
+    });
+}
+
+function revealLetter(elements) {
+    const { envelope, letter } = elements;
     if (envelope) {
-        envelope.addEventListener('click', openLetter);
-        envelope.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                openLetter();
-            }
-        });
+        envelope.classList.add('opened');
+        envelope.setAttribute('aria-hidden', 'true');
+        envelope.setAttribute('tabindex', '-1');
+        setTimeout(() => {
+            envelope.style.display = 'none';
+        }, 900);
     }
 
-    if (randomBtn && randomDisplay) {
-        randomBtn.addEventListener('click', () => {
-            const pool = config.loveMessages || [];
-            if (!pool.length) return;
-            const message = pool[Math.floor(Math.random() * pool.length)];
-            randomDisplay.textContent = message;
-            randomDisplay.classList.add('show');
+    if (letter) {
+        letter.style.display = 'block';
+        requestAnimationFrame(() => {
+            letter.classList.add('revealed');
+            letter.setAttribute('aria-hidden', 'false');
         });
     }
+}
 
-    if (secretHeart && secretMessage) {
-        const toggleSecret = () => {
-            const active = secretMessage.classList.toggle('active');
-            secretMessage.setAttribute('aria-hidden', String(!active));
-            secretHeart.setAttribute('aria-expanded', String(active));
-        };
-        secretHeart.addEventListener('click', toggleSecret);
-        secretHeart.addEventListener('keydown', (event) => {
-            if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                toggleSecret();
-            }
-        });
-    }
+function registerRandomMessage(elements) {
+    const { randomBtn, randomDisplay } = elements;
+    if (!randomBtn || !randomDisplay) return;
 
-    function startTyping() {
-        if (typingStarted || !textArea) return;
-        typingStarted = true;
+    randomBtn.addEventListener('click', () => {
+        const pool = Array.isArray(appState.config.loveMessages) ? appState.config.loveMessages : [];
+        if (!pool.length) return;
+        const message = pool[Math.floor(Math.random() * pool.length)];
+        randomDisplay.textContent = safeText(message);
+        randomDisplay.classList.add('show');
+    });
+}
 
-        let lineIndex = 0;
-        let charIndex = 0;
-        let currentContent = '';
+function registerSecretToggle(elements) {
+    const { secretHeart, secretMessage } = elements;
+    if (!secretHeart || !secretMessage) return;
 
-        function typeLine() {
-            if (!config.texts || lineIndex >= config.texts.length) {
-                textArea.innerHTML = currentContent.replace(/<br>$/, '');
-                return;
-            }
+    const toggleSecret = () => {
+        const active = secretMessage.classList.toggle('active');
+        secretMessage.setAttribute('aria-hidden', String(!active));
+        secretHeart.setAttribute('aria-expanded', String(active));
+    };
 
-            const line = config.texts[lineIndex];
-            if (charIndex < line.length) {
-                currentContent = `${currentContent}${line.charAt(charIndex)}`;
-                textArea.innerHTML = `${currentContent}<span class="cursor">|</span>`;
-                charIndex++;
-                setTimeout(typeLine, 120);
-            } else {
-                currentContent += '<br>';
-                lineIndex++;
-                charIndex = 0;
-                setTimeout(typeLine, 500);
-            }
+    secretHeart.addEventListener('click', toggleSecret);
+    secretHeart.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+            event.preventDefault();
+            toggleSecret();
+        }
+    });
+}
+
+function startTyping(elements) {
+    if (appState.typingStarted || !elements.textArea) return;
+    appState.typingStarted = true;
+
+    const texts = Array.isArray(appState.config.texts) ? appState.config.texts.map(safeText) : [];
+    let lineIndex = 0;
+    let charIndex = 0;
+    let currentContent = '';
+
+    function typeLine() {
+        if (!texts.length || lineIndex >= texts.length) {
+            elements.textArea.innerHTML = currentContent.replace(/<br>$/, '');
+            return;
         }
 
-        typeLine();
+        const line = texts[lineIndex];
+        if (charIndex < line.length) {
+            currentContent = `${currentContent}${line.charAt(charIndex)}`;
+            elements.textArea.innerHTML = `${currentContent}<span class="cursor">|</span>`;
+            charIndex++;
+            setTimeout(typeLine, 120);
+        } else {
+            currentContent += '<br>';
+            lineIndex++;
+            charIndex = 0;
+            setTimeout(typeLine, 500);
+        }
     }
 
-    function startParticles() {
-        if (particleTimer || !particlesContainer) return;
-        const symbols = ['❤', '💗', '💕', '✨'];
-        const maxHearts = 28;
+    typeLine();
+}
 
-        particleTimer = setInterval(() => {
-            if (particlesContainer.childElementCount >= maxHearts) return;
+function startParticles(elements) {
+    if (appState.particleTimer || !elements.particlesContainer) return;
+    const symbols = ['❤', '💗', '💕', '✨'];
+    const maxHearts = 28;
 
-            const heart = document.createElement('span');
-            heart.className = 'heart-particle';
-            heart.textContent = symbols[Math.floor(Math.random() * symbols.length)];
+    appState.particleTimer = setInterval(() => {
+        if (elements.particlesContainer.childElementCount >= maxHearts) return;
 
-            const left = Math.random() * 100;
-            const size = Math.random() * 18 + 14;
-            const drift = Math.random() * 24 - 12; // left/right range
-            const scale = (size / 28).toFixed(2);
-            const opacity = (Math.random() * 0.4 + 0.4).toFixed(2);
-            const duration = Math.random() * 5 + 4;
-            const delay = Math.random() * 1.5;
+        const heart = document.createElement('span');
+        heart.className = 'heart-particle';
+        heart.textContent = symbols[Math.floor(Math.random() * symbols.length)];
 
-            heart.style.left = `${left}vw`;
-            heart.style.fontSize = `${size}px`;
-            heart.style.setProperty('--drift', `${drift}vw`);
-            heart.style.setProperty('--scale', scale);
-            heart.style.setProperty('--opacity', opacity);
-            heart.style.animationDuration = `${duration}s`;
-            heart.style.animationDelay = `${delay}s`;
+        const left = Math.random() * 100;
+        const size = Math.random() * 18 + 14;
+        const drift = Math.random() * 24 - 12;
+        const scale = (size / 28).toFixed(2);
+        const opacity = (Math.random() * 0.4 + 0.4).toFixed(2);
+        const duration = Math.random() * 5 + 4;
+        const delay = Math.random() * 1.5;
 
-            particlesContainer.appendChild(heart);
-            setTimeout(() => heart.remove(), (duration + delay) * 1000 + 200);
-        }, 600);
+        heart.style.left = `${left}vw`;
+        heart.style.fontSize = `${size}px`;
+        heart.style.setProperty('--drift', `${drift}vw`);
+        heart.style.setProperty('--scale', scale);
+        heart.style.setProperty('--opacity', opacity);
+        heart.style.animationDuration = `${duration}s`;
+        heart.style.animationDelay = `${delay}s`;
+
+        elements.particlesContainer.appendChild(heart);
+        setTimeout(() => heart.remove(), (duration + delay) * 1000 + 200);
+    }, 600);
+}
+
+function populateTimeline(elements) {
+    if (!elements.timelineList) return;
+    const timeline = Array.isArray(appState.config.timeline) ? appState.config.timeline : [];
+    elements.timelineList.innerHTML = timeline.map(item => `
+        <article class="timeline-item">
+            <span class="timeline-icon">✦</span>
+            <p class="timeline-time">${safeText(item.date)}</p>
+            <p class="timeline-title">${safeText(item.title)}</p>
+            <p class="timeline-desc">${safeText(item.description)}</p>
+        </article>
+    `).join('');
+}
+
+function updateDayCount(elements) {
+    if (!elements.dayCount) return;
+    const start = safeText(appState.config.relationshipStart);
+    const days = calculateDays(start);
+    elements.dayCount.textContent = days;
+}
+
+function calculateDays(dateString) {
+    const parts = dateString.split('-').map(Number);
+    if (parts.length !== 3 || parts.some(isNaN)) return 0;
+    const [year, month, day] = parts;
+    const startUTC = Date.UTC(year, month - 1, day);
+    const today = new Date();
+    const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
+    const diff = todayUTC - startUTC;
+    return diff > 0 ? Math.floor(diff / (1000 * 60 * 60 * 24)) : 0;
+}
+
+async function loadConfig() {
+    const remoteConfig = await fetchJson(CONFIG_ENDPOINT);
+    if (remoteConfig) {
+        return normalizeConfig(remoteConfig);
     }
 
-    function populateTimeline() {
-        if (!timelineList || !config.timeline) return;
-        timelineList.innerHTML = config.timeline.map(item => `
-            <article class="timeline-item">
-                <span class="timeline-icon">✦</span>
-                <p class="timeline-time">${item.date}</p>
-                <p class="timeline-title">${item.title}</p>
-                <p class="timeline-desc">${item.description}</p>
-            </article>
-        `).join('');
+    const backupConfig = await fetchJson(DEFAULT_CONFIG_URL);
+    if (backupConfig) {
+        return normalizeConfig(backupConfig);
     }
 
-    function updateDayCount() {
-        if (!dayCountEl || !config.relationshipStart) return;
-        const days = calculateDays(config.relationshipStart);
-        dayCountEl.textContent = days;
-    }
+    console.warn('未能从服务器或本地 JSON 读取配置，使用内置兜底内容。');
+    return normalizeConfig(LOCAL_FALLBACK_CONFIG);
+}
 
-    function calculateDays(dateString) {
-        const parts = dateString.split('-').map(Number);
-        if (parts.length !== 3 || parts.some(isNaN)) return 0;
-        const [year, month, day] = parts;
-        const startUTC = Date.UTC(year, month - 1, day);
-        const today = new Date();
-        const todayUTC = Date.UTC(today.getFullYear(), today.getMonth(), today.getDate());
-        const diff = todayUTC - startUTC;
-        return diff > 0 ? Math.floor(diff / (1000 * 60 * 60 * 24)) : 0;
+async function fetchJson(url) {
+    try {
+        const response = await fetch(url, { cache: 'no-store' });
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (error) {
+        console.warn(`获取 ${url} 失败：`, error);
+        return null;
     }
-});
+}
+
+function normalizeConfig(raw) {
+    return {
+        nickname: safeText(raw.nickname) || LOCAL_FALLBACK_CONFIG.nickname,
+        texts: normalizeTextArray(raw.texts, LOCAL_FALLBACK_CONFIG.texts),
+        signature: safeText(raw.signature) || LOCAL_FALLBACK_CONFIG.signature,
+        date: safeText(raw.date) || LOCAL_FALLBACK_CONFIG.date,
+        relationshipStart: safeText(raw.relationshipStart) || LOCAL_FALLBACK_CONFIG.relationshipStart,
+        timeline: normalizeTimeline(raw.timeline),
+        loveMessages: normalizeTextArray(raw.loveMessages, LOCAL_FALLBACK_CONFIG.loveMessages),
+        secretMessage: safeText(raw.secretMessage) || LOCAL_FALLBACK_CONFIG.secretMessage
+    };
+}
+
+function normalizeTextArray(value, fallback = []) {
+    if (!Array.isArray(value)) return [...fallback];
+    return value.map(item => safeText(item)).filter(item => item);
+}
+
+function normalizeTimeline(items) {
+    if (!Array.isArray(items)) {
+        return LOCAL_FALLBACK_CONFIG.timeline.map(item => ({ ...item }));
+    }
+    return items.map(item => ({
+        title: safeText(item.title),
+        date: safeText(item.date),
+        description: safeText(item.description)
+    })).filter(item => item.title || item.description || item.date);
+}
+
+function safeText(value) {
+    return typeof value === 'string' ? value : '';
+}

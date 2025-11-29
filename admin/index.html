@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForMyLove 配置后台</title>
+    <link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body>
+    <main class="admin-wrapper">
+        <section id="login-panel" class="admin-card">
+            <h1>ForMyLove 配置后台</h1>
+            <p class="card-tip">使用在 Cloudflare Workers 中设置的管理员账号登录以编辑告白内容。</p>
+            <form id="login-form" class="login-form">
+                <label class="form-field">
+                    <span>用户名</span>
+                    <input type="text" name="username" autocomplete="username" required>
+                </label>
+                <label class="form-field">
+                    <span>密码</span>
+                    <input type="password" name="password" autocomplete="current-password" required>
+                </label>
+                <button type="submit" class="primary">登录</button>
+                <p class="hint">未部署后台？先按照 README 中的「Cloudflare Workers 管理配置」步骤完成绑定。</p>
+            </form>
+        </section>
+
+        <section id="config-panel" class="admin-card hidden" aria-hidden="true">
+            <header class="panel-header">
+                <div>
+                    <p class="panel-label">登录成功</p>
+                    <h2>编辑 ForMyLove 文案</h2>
+                </div>
+                <div class="panel-actions">
+                    <button type="button" id="reload-button" class="ghost">重新载入</button>
+                    <button type="button" id="logout-button" class="subtle">退出登录</button>
+                </div>
+            </header>
+
+            <form id="config-form" class="config-form" novalidate>
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>称呼（nickname）</span>
+                        <input type="text" id="nickname-input" required>
+                    </label>
+                    <label class="form-field">
+                        <span>署名（signature）</span>
+                        <input type="text" id="signature-input" required>
+                    </label>
+                </div>
+
+                <div class="form-grid">
+                    <label class="form-field">
+                        <span>落款日期（date，任意字符串）</span>
+                        <input type="text" id="date-input" placeholder="示例：2025.11.30">
+                    </label>
+                    <label class="form-field">
+                        <span>在一起的那天（relationshipStart）</span>
+                        <input type="date" id="relationship-input">
+                    </label>
+                </div>
+
+                <section class="fieldset">
+                    <div class="fieldset-header">
+                        <div>
+                            <h3>正文段落（texts）</h3>
+                            <p>每行代表一句或一段情话，可自由排序、增删。</p>
+                        </div>
+                        <button type="button" id="add-text-btn" class="ghost">新增段落</button>
+                    </div>
+                    <div id="texts-list" class="list-editor" aria-live="polite"></div>
+                </section>
+
+                <section class="fieldset">
+                    <div class="fieldset-header">
+                        <div>
+                            <h3>随机情话（loveMessages）</h3>
+                            <p>点击按钮后随机出现的甜言蜜语。</p>
+                        </div>
+                        <button type="button" id="add-love-btn" class="ghost">新增情话</button>
+                    </div>
+                    <div id="love-list" class="list-editor" aria-live="polite"></div>
+                </section>
+
+                <section class="fieldset">
+                    <div class="fieldset-header">
+                        <div>
+                            <h3>时间线（timeline）</h3>
+                            <p>每个节点包含标题、日期和描述，可增删排序。</p>
+                        </div>
+                        <button type="button" id="add-timeline-btn" class="ghost">新增节点</button>
+                    </div>
+                    <div id="timeline-list" class="list-editor timeline" aria-live="polite"></div>
+                </section>
+
+                <label class="form-field">
+                    <span>隐藏彩蛋（secretMessage）</span>
+                    <textarea id="secret-input" rows="3"></textarea>
+                </label>
+
+                <div class="form-actions">
+                    <button type="submit" class="primary">保存配置</button>
+                    <button type="button" id="reset-button" class="ghost">恢复默认内容</button>
+                </div>
+            </form>
+
+            <p id="toast" class="toast" role="status" aria-live="polite"></p>
+        </section>
+    </main>
+
+    <script src="../assets/js/admin.js" defer></script>
+</body>
+</html>
