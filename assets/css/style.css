@@ -1,6 +1,24 @@
 /* assets/css/style.css */
 
-/* 全局重置 */
+@font-face {
+    font-family: 'LongCang';
+    src: url('../fonts/LongCang-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+
+:root {
+    --pink-base: #ffe4ec;
+    --pink-soft: #ffd6e8;
+    --pink-strong: #ff9fba;
+    --pink-deep: #f48fb1;
+    --milk-white: #fff9f5;
+    --gold: #f6c453;
+    --text-primary: #5c3d4f;
+    --text-secondary: #7a5367;
+    --shadow-soft: 0 25px 45px rgba(92, 61, 79, 0.18);
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -8,54 +26,112 @@
 }
 
 body {
-    background-color: #fce4ec; /* 浪漫的粉色背景 */
-    font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-    overflow: hidden; /* 防止出现滚动条 */
-    height: 100vh;
+    min-height: 100vh;
+    font-family: 'PingFang SC', 'Noto Sans SC', 'Source Han Sans SC', 'Microsoft YaHei', sans-serif;
+    background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.8), transparent 45%),
+                radial-gradient(circle at 20% 80%, rgba(255, 193, 218, 0.6), transparent 40%),
+                linear-gradient(135deg, #fff0f5, #ffd9e8 60%, #ffeef5);
+    color: var(--text-primary);
     display: flex;
     justify-content: center;
     align-items: center;
+    padding: 32px 20px 48px;
+    overflow-x: hidden;
+    position: relative;
 }
 
-/* --- 信封部分 --- */
-#envelope-container {
-    position: relative;
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: url('data:image/svg+xml,%3Csvg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23ffe4ec" fill-opacity="0.3"%3E%3Cpath d="M55 64c3-12 21-12 24 0 3-12 21-12 24 0 3 12-9 22-24 34-15-12-27-22-24-34Z"/%3E%3C/g%3E%3C/svg%3E') repeat;
+    opacity: 0.4;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.page-wrapper {
+    width: 100%;
+    max-width: 840px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    z-index: 2;
+}
+
+#particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    overflow: hidden;
+}
+
+/* Envelope */
+.envelope-stage {
     cursor: pointer;
-    z-index: 10;
-    transition: opacity 1s ease; /* 消失时的淡出效果 */
+    position: relative;
+    z-index: 5;
+    transition: opacity 0.8s ease, transform 0.8s ease;
+    perspective: 1200px;
+}
+
+.envelope-stage.opened {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.92);
+    pointer-events: none;
+}
+
+.envelope-stage:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 8px;
 }
 
 .envelope {
-    width: 300px;
-    height: 200px;
-    background-color: #ff5252;
+    width: 320px;
+    height: 210px;
+    background: linear-gradient(145deg, #ffd6e8, #ffc7da);
+    border-radius: 18px;
     position: relative;
-    border-radius: 5px;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    box-shadow: var(--shadow-soft);
+    overflow: hidden;
 }
 
-/* 信封盖子（用 CSS 画三角形） */
-.envelope::before {
+.envelope::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    border-left: 150px solid transparent;
-    border-right: 150px solid transparent;
-    border-top: 100px solid #ff8a80; /* 盖子颜色浅一点 */
-    z-index: 2;
+    inset: 12px;
+    border-radius: 16px;
+    border: 2px dashed rgba(246, 196, 83, 0.45);
+}
+
+.envelope-flap {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 214, 232, 0.95));
+    clip-path: polygon(0 0, 100% 0, 50% 60%);
     transform-origin: top;
+    transition: transform 1s ease;
+    z-index: 2;
+    transform-style: preserve-3d;
+    backface-visibility: hidden;
+}
+
+.envelope-stage.opened .envelope-flap {
+    transform: rotateX(180deg);
 }
 
 .letter-preview {
-    color: white;
+    position: absolute;
+    bottom: 36px;
+    width: 100%;
+    text-align: center;
     font-size: 1.2rem;
-    font-weight: bold;
+    letter-spacing: 1px;
+    font-family: 'LongCang', 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+    color: #b14d6d;
     z-index: 3;
-    margin-top: 60px;
 }
 
 .heart-seal {
@@ -63,83 +139,326 @@ body {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background: #fff;
-    color: #ff5252;
-    padding: 5px 10px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    animation: pulse 1.5s infinite; /* 心跳动画 */
+    padding: 10px 22px;
+    border-radius: 999px;
+    background: var(--milk-white);
+    color: var(--pink-strong);
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 8px 20px rgba(244, 143, 177, 0.35);
     z-index: 4;
+    animation: pulse 1.8s infinite ease-in-out;
 }
 
 @keyframes pulse {
     0% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.1); }
+    50% { transform: translate(-50%, -50%) scale(1.08); }
     100% { transform: translate(-50%, -50%) scale(1); }
 }
 
-/* --- 信纸部分 --- */
-#letter-container {
-    position: absolute;
-    width: 90%;
-    max-width: 500px;
-    height: 80vh; /* 占据屏幕高度 */
-    background: #fffdf7; /* 米色信纸 */
-    padding: 30px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.1);
-    border-radius: 10px;
-    overflow-y: auto; /* 内容多了可以滚动 */
-    opacity: 0; /* 初始透明 */
-    transition: opacity 1.5s ease;
+/* Letter */
+.letter-shell {
+    width: min(92vw, 720px);
+    max-height: 85vh;
+    background: rgba(255, 253, 249, 0.9);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: var(--shadow-soft);
+    border: 1px solid rgba(255, 214, 232, 0.8);
+    backdrop-filter: blur(8px);
+    position: relative;
     z-index: 5;
-    background-image: linear-gradient(#e1e1e1 1px, transparent 1px); /* 信纸横线效果 */
-    background-size: 100% 30px;
-    line-height: 30px;
+    opacity: 0;
+    transform: translateY(18px) scale(0.96);
+    transition: opacity 0.9s ease, transform 0.9s ease;
+    overflow-y: auto;
 }
 
-.letter-content h2 {
+.letter-shell.revealed {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.letter-content {
+    position: relative;
+    padding: 8px 8px 48px;
+}
+
+.letter-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.letter-header h2 {
+    font-size: 2.1rem;
+    font-family: 'LongCang', 'STKaiti', 'KaiTi', 'Noto Serif SC', serif;
+    color: var(--pink-deep);
+    letter-spacing: 1px;
+}
+
+.relationship-counter {
+    min-width: 180px;
+    background: linear-gradient(135deg, rgba(255, 214, 232, 0.9), rgba(255, 255, 255, 0.9));
+    border-radius: 18px;
+    padding: 12px 20px;
+    border: 1px solid rgba(246, 196, 83, 0.3);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.6);
     text-align: center;
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 1.5rem;
+}
+
+.counter-label {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.counter-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--pink-deep);
+    margin-top: 4px;
 }
 
 #text-area {
-    font-size: 1.1rem;
-    color: #555;
-    white-space: pre-wrap; /* 保留换行 */
+    font-size: 1.08rem;
+    line-height: 1.9;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    min-height: 180px;
+    margin-bottom: 8px;
 }
 
 .cursor {
     animation: blink 1s infinite;
+    color: var(--pink-strong);
 }
 
 @keyframes blink {
-    50% { opacity: 0; }
+    0%, 40% { opacity: 1; }
+    50%, 100% { opacity: 0; }
+}
+
+.message-panel {
+    margin-top: 28px;
+    padding: 18px 20px;
+    border-radius: 20px;
+    background: rgba(255, 214, 232, 0.4);
+    border: 1px dashed rgba(244, 143, 177, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.heart-button {
+    align-self: flex-start;
+    background: linear-gradient(135deg, var(--pink-strong), #ffb0c9);
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 10px 18px rgba(255, 143, 178, 0.35);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.heart-button:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 3px;
+}
+
+.heart-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 22px rgba(255, 143, 178, 0.45);
+}
+
+.message-display {
+    min-height: 22px;
+    font-size: 1rem;
+    color: var(--text-primary);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.message-display.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.timeline {
+    margin-top: 32px;
+}
+
+.timeline h3 {
+    font-size: 1.3rem;
+    color: var(--pink-deep);
+    margin-bottom: 16px;
+}
+
+.timeline-list {
+    position: relative;
+    padding-left: 24px;
+}
+
+.timeline-list::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(246, 196, 83, 0.4), rgba(244, 143, 177, 0.6));
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+    padding-left: 16px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -5px;
+    top: 0;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border: 2px solid var(--pink-strong);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    color: var(--pink-strong);
+}
+
+.timeline-title {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.timeline-time {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.timeline-desc {
+    color: var(--text-secondary);
+    line-height: 1.6;
 }
 
 .signature-area {
-    margin-top: 40px;
+    margin-top: 32px;
     text-align: right;
-    font-weight: bold;
-    color: #333;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-/* --- 爱心雨特效 --- */
+.secret-heart {
+    position: absolute;
+    bottom: 12px;
+    left: 18px;
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    color: rgba(246, 196, 83, 0.6);
+    cursor: pointer;
+    opacity: 0.4;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.secret-heart:hover,
+.secret-heart:focus-visible {
+    opacity: 0.9;
+    transform: scale(1.15);
+}
+
+.secret-message {
+    margin-top: 16px;
+    padding: 16px 18px;
+    border-radius: 18px;
+    border: 1px dashed rgba(246, 196, 83, 0.6);
+    background: rgba(255, 255, 255, 0.8);
+    color: var(--text-secondary);
+    line-height: 1.7;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    pointer-events: none;
+}
+
+.secret-message.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+}
+
+/* Floating hearts */
 .heart-particle {
-    position: fixed;
-    color: #ff4081;
+    position: absolute;
+    top: -10vh;
+    color: rgba(255, 153, 186, 0.8);
     font-size: 20px;
+    animation-name: floatDown;
+    animation-timing-function: ease-in;
+    animation-fill-mode: forwards;
     user-select: none;
-    pointer-events: none; /* 鼠标可以直接穿透 */
-    animation: fall linear forwards;
-    z-index: 1;
+    pointer-events: none;
 }
 
-@keyframes fall {
-    to {
-        transform: translateY(100vh) rotate(360deg);
+@keyframes floatDown {
+    0% {
+        transform: translate3d(0, -10vh, 0) scale(var(--scale, 1));
         opacity: 0;
+    }
+    20% {
+        opacity: var(--opacity, 0.8);
+    }
+    100% {
+        transform: translate3d(var(--drift, 0), 110vh, 0) scale(calc(var(--scale, 1) * 0.8));
+        opacity: 0;
+    }
+}
+
+/* Responsive tweaks */
+@media (max-width: 600px) {
+    body {
+        padding: 24px 16px 32px;
+        align-items: flex-start;
+    }
+
+    .envelope {
+        width: 280px;
+        height: 190px;
+    }
+
+    .letter-shell {
+        width: 100%;
+        max-height: none;
+        padding: 18px;
+    }
+
+    .letter-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .relationship-counter {
+        width: 100%;
+    }
+
+    .message-panel,
+    .timeline,
+    .signature-area {
+        margin-top: 24px;
     }
 }

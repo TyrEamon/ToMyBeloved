@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>一封特别的信 | 💖 专属告白</title>
-    
+    <title>For My Love | 粉色浪漫告白</title>
+
     <link rel="stylesheet" href="assets/css/style.css">
-    
-    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon"> 
+    <link rel="icon" href="assets/images/favicon.ico" type="image/x-icon">
 </head>
 <body>
     <audio id="bgm" loop preload="auto">
@@ -15,26 +14,55 @@
         您的浏览器不支持 HTML5 Audio 标签。
     </audio>
 
-    <div id="envelope-container">
-        <div class="envelope">
-            <div class="cover"></div>
-            <div class="letter-preview">To: 最特别的你</div>
-            <div class="heart-seal">点击开启 ❤️</div>
+    <main class="page-wrapper">
+        <div id="envelope-container" class="envelope-stage" role="button" tabindex="0" aria-label="打开浪漫信封">
+            <div class="envelope">
+                <div class="envelope-flap"></div>
+                <div class="letter-preview">To: 最特别的你</div>
+                <div class="heart-seal">点击开启 ❤️</div>
+            </div>
         </div>
-    </div>
 
-    <div id="letter-container" style="opacity: 0; display: none;">
-        <div class="letter-content">
-            <h2 id="nickname"></h2>
-            
-            <div id="text-area"></div> 
-            
-            <div class="signature-area">
-                <p id="signature"></p> <p id="date"></p>      </div>
-        </div>
-    </div>
+        <section id="letter-container" class="letter-shell" style="display: none;" aria-hidden="true">
+            <div class="letter-content">
+                <header class="letter-header">
+                    <h2 id="nickname"></h2>
+                    <div class="relationship-counter">
+                        <p class="counter-label">我们在一起已经</p>
+                        <p class="counter-value"><span id="day-count">0</span> 天</p>
+                    </div>
+                </header>
 
-    <div id="particles"></div>
+                <div id="text-area" class="typewriter"></div>
+
+                <section class="message-panel" aria-live="polite">
+                    <button id="random-message-btn" class="heart-button" type="button">
+                        <span aria-hidden="true">💗</span> 点击抽取一条情话
+                    </button>
+                    <p id="random-message-display" class="message-display"></p>
+                </section>
+
+                <section class="timeline" aria-label="我们的纪念时刻">
+                    <h3>我们的时光</h3>
+                    <div id="timeline-list" class="timeline-list">
+                        <!-- 时间线条目由 assets/js/script.js 中的 config.timeline 自动注入 -->
+                    </div>
+                </section>
+
+                <div class="signature-area">
+                    <p id="signature"></p>
+                    <p id="date"></p>
+                </div>
+
+                <button type="button" id="secret-heart" class="secret-heart" aria-label="点开隐藏的心意">♡</button>
+                <div id="secret-message" class="secret-message" aria-hidden="true">
+                    <!-- 小彩蛋的文字由 config.secretMessage 控制 -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="particles" aria-hidden="true"></div>
 
     <script src="assets/js/script.js"></script>
 </body>
