@@ -1,0 +1,11 @@
+# General OS-generated files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+
+# Dependency directories (for potential tooling)
+node_modules/
