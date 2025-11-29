@@ -1,6 +1,6 @@
-# ForMyLove
+# ToMyBeloved
 A romantic web confession page
-# ForMyLove 
+# ToMyBeloved
 
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/yourusername/project)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -10,7 +10,7 @@ A romantic web confession page
 
 ## 📖 简介 (Introduction)
 
-`ForMyLove是一个简单的表白工具，歌词和内容全部可以任你的心意发挥，祝大家有情人终成眷属！
+`ToMyBeloved是一个简单的表白工具，歌词和内容全部可以任你的心意发挥，祝大家有情人终成眷属！
 
 ## 🚀 部署指南
 
