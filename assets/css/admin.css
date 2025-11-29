@@ -73,22 +73,43 @@ body {
     font-size: 0.95rem;
 }
 
-.form-field input,
-.form-field textarea {
+.form-field > span {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.admin-card input,
+.admin-card textarea {
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px 14px;
     font-size: 1rem;
     font-family: inherit;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
-    background: rgba(255, 255, 255, 0.8);
+    color: var(--text);
+    background: #fff;
+    caret-color: var(--primary-dark);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.form-field input:focus,
-.form-field textarea:focus {
+.admin-card input::placeholder,
+.admin-card textarea::placeholder {
+    color: rgba(31, 41, 55, 0.55);
+    opacity: 1;
+}
+
+.admin-card input:focus,
+.admin-card textarea:focus {
     border-color: var(--primary);
     outline: none;
     box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.2);
+    background: #fff;
+    color: var(--text);
+}
+
+.admin-card input:disabled,
+.admin-card textarea:disabled {
+    background: rgba(248, 250, 252, 0.9);
+    color: rgba(31, 41, 55, 0.6);
 }
 
 .form-grid {
